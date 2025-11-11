@@ -3,7 +3,12 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="theme-color" content="#667eea"/>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>حاسبة طول البليت لقالب البثق - الألومنيوم</title>
+<link rel="manifest" href="manifest.json">
 <style>
 /* --- ستايل الصفحة (مبني على النسخة الكاملة السابقة) --- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -240,6 +245,23 @@ button:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.12)}
     border-right: 3px solid #42a5f5;
 }
 
+/* زر التثبيت */
+.install-btn {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    z-index: 1000;
+    display: none;
+}
+
 @media(max-width:900px){ 
     .form-grid,.buttons-group{grid-template-columns:1fr} 
     .container{padding:18px} 
@@ -250,6 +272,9 @@ button:hover{transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,0.12)}
 </style>
 </head>
 <body>
+
+<!-- زر تثبيت التطبيق -->
+<button class="install-btn" id="installButton">📱 تثبيت التطبيق</button>
 
 <!-- بانر + أرقام الهاتف المتحركة -->
 <div class="welcome-wrap">
@@ -1030,6 +1055,47 @@ window.addEventListener('load', function() {
         console.log(`آخر قالب تم التعديل: ${lastMold}`);
     }
 });
+
+// ========== PWA INSTALLATION CODE ==========
+let deferredPrompt;
+const installButton = document.getElementById('installButton');
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installButton.style.display = 'block';
+});
+
+installButton.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            installButton.style.display = 'none';
+            console.log('✅ تم تثبيت التطبيق بنجاح');
+        }
+        deferredPrompt = null;
+    }
+});
+
+window.addEventListener('appinstalled', () => {
+    installButton.style.display = 'none';
+    deferredPrompt = null;
+    console.log('🎉 التطبيق مثبت على الجهاز');
+});
+
+// Service Worker للتثبيت
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+                console.log('✅ ServiceWorker مسجل بنجاح:', registration.scope);
+            })
+            .catch(function(err) {
+                console.log('❌ فشل تسجيل ServiceWorker:', err);
+            });
+    });
+}
 </script>
 </body>
 </html>
