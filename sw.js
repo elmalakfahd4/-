@@ -1,4 +1,4 @@
-const CACHE_NAME = 'aluminum-calculator-v1';
+const CACHE_NAME = 'billet-calculator-v3';
 const urlsToCache = [
   '/',
   '/index.html',
