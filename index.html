@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#667eea"/>
     <title>حاسبة قطاعات الألومنيوم</title>
-    
-    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
     
     <style>
@@ -14,7 +12,7 @@
     body {
         font-family: 'Arial', sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        padding: 20px;
+        padding: 15px;
         min-height: 100vh;
     }
     
@@ -31,6 +29,7 @@
         color: #2c3e50;
         text-align: center;
         margin-bottom: 20px;
+        font-size: 24px;
     }
     
     .form-group {
@@ -42,6 +41,7 @@
         margin-bottom: 5px;
         font-weight: bold;
         color: #34495e;
+        font-size: 14px;
     }
     
     input, select {
@@ -73,11 +73,25 @@
         text-align: center;
         display: none;
     }
+    
+    .banner {
+        background: #3498db;
+        color: white;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 15px;
+        font-size: 14px;
+    }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🧮 حاسبة قطاعات الألومنيوم</h1>
+        
+        <div class="banner">
+            تطبيق مقدم من: فهد عبدالعزيز
+        </div>
         
         <div class="form-group">
             <label for="numOpenings">عدد فتحات القالب:</label>
@@ -85,39 +99,86 @@
         </div>
         
         <div class="form-group">
-            <label for="rodWeight">وزن العود (كجم):</label>
+            <label for="rodWeight">وزن العود لـ 6 متر (كجم):</label>
             <input type="number" id="rodWeight" value="1.2" step="0.01">
         </div>
         
         <div class="form-group">
-            <label for="numCuts">عدد القصات:</label>
+            <label for="weightPerMeter">الوزن المتري (كجم/م):</label>
+            <input type="number" id="weightPerMeter" value="0.200" step="0.001">
+        </div>
+        
+        <div class="form-group">
+            <label for="numCuts">عدد القصات المطلوبة:</label>
             <input type="number" id="numCuts" value="8" min="1">
         </div>
         
-        <button class="calculate-btn" onclick="calculate()">احسب طول البليت</button>
+        <div class="form-group">
+            <label for="billetDiameter">قطر البليت (بوصة):</label>
+            <select id="billetDiameter">
+                <option value="5">5 بوصة</option>
+                <option value="6">6 بوصة</option>
+                <option value="7" selected>7 بوصة</option>
+                <option value="8">8 بوصة</option>
+                <option value="9">9 بوصة</option>
+                <option value="10">10 بوصة</option>
+            </select>
+        </div>
+        
+        <button class="calculate-btn" onclick="calculateBilletLength()">🧮 احسب طول البليت</button>
         
         <div id="result" class="result">
-            <h3>النتيجة:</h3>
-            <div style="font-size: 24px; color: #e74c3c; font-weight: bold;">
-                الطول المناسب: <span id="billetLength">0</span> سم
+            <h3>📊 نتائج الحساب</h3>
+            <div style="font-size: 22px; color: #e74c3c; font-weight: bold; margin: 15px 0;">
+                📐 الطول المناسب للبليت: <span id="billetLength">0</span> سم
             </div>
+            <div style="color: #7f8c8d;">
+                ⚖️ الوزن التقريبي: <span id="billetWeight">0</span> كجم
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px; color: #7f8c8d; font-size: 12px;">
+            للتواصل: 01124006047 - 01120440740
         </div>
     </div>
 
     <script>
-    function calculate() {
-        const openings = parseInt(document.getElementById('numOpenings').value) || 0;
-        const weight = parseFloat(document.getElementById('rodWeight').value) || 0;
-        const cuts = parseInt(document.getElementById('numCuts').value) || 0;
+    // تحديث الوزن المتري تلقائياً
+    document.getElementById('rodWeight').addEventListener('input', function() {
+        const rodWeight = parseFloat(this.value) || 0;
+        document.getElementById('weightPerMeter').value = (rodWeight / 6).toFixed(3);
+    });
+    
+    document.getElementById('weightPerMeter').addEventListener('input', function() {
+        const weightPerMeter = parseFloat(this.value) || 0;
+        document.getElementById('rodWeight').value = (weightPerMeter * 6).toFixed(3);
+    });
+    
+    function calculateBilletLength() {
+        const numOpenings = parseInt(document.getElementById('numOpenings').value) || 0;
+        const rodWeight = parseFloat(document.getElementById('rodWeight').value) || 0;
+        const numCuts = parseInt(document.getElementById('numCuts').value) || 0;
+        const billetDiameter = document.getElementById('billetDiameter').value;
         
-        const totalWeight = openings * weight * cuts;
-        const billetLength = (totalWeight * 1.15) / 0.67;
+        // أوزان البليت لكل قطر (كجم/سم)
+        const weights = {
+            '5': 0.342, '6': 0.492, '7': 0.670, 
+            '8': 0.875, '9': 1.107, '10': 1.367
+        };
         
-        document.getElementById('billetLength').textContent = billetLength.toFixed(1);
+        const weightPerCm = weights[billetDiameter] || 0.670;
+        const totalRodsCount = numOpenings * numCuts;
+        const totalRodsWeight = rodWeight * totalRodsCount;
+        const finalWeight = totalRodsWeight * 1.05 * 1.10; // هالك + أمان
+        const billetLengthCm = finalWeight / weightPerCm;
+        const billetWeightKg = billetLengthCm * weightPerCm;
+        
+        document.getElementById('billetLength').textContent = billetLengthCm.toFixed(1);
+        document.getElementById('billetWeight').textContent = billetWeightKg.toFixed(1);
         document.getElementById('result').style.display = 'block';
     }
     
-    // تسجيل Service Worker للتثبيت
+    // Service Worker للتثبيت
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js')
             .then(() => console.log('Service Worker registered'))
